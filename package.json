@@ -1,0 +1,8 @@
+{
+  "name": "carrada",
+  "private": true,
+  "workspaces": [
+    "mobile",
+    "server"
+  ]
+}

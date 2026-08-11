@@ -1,0 +1,10 @@
+{
+  "expo": {
+    "name": "CarRada",
+    "slug": "carrada",
+    "version": "0.1.0",
+    "platforms": ["ios", "android"],
+    "sdkVersion": "53.0.0",
+    "orientation": "portrait"
+  }
+}
