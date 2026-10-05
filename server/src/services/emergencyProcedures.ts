@@ -32,13 +32,14 @@ const procedures: EmergencyProcedure[] = [
     summary: 'Guide through a safe flat tire inspection and basic tire change preparation.',
     safety_tips: 'Park on firm, level ground away from traffic. Use hazard lights and wheel chocks if available. Never change a tire on a highway shoulder or in moving traffic.',
     steps: [
-      { title: 'Secure the car', description: 'Turn on hazard lights, apply the parking brake, and place safety triangles or flares if you have them.' },
-      { title: 'Inspect the tire', description: 'Look for nails, cuts, or a visibly collapsed sidewall. Do not attempt to repair a sidewall puncture.' },
-      { title: 'Prepare to change', description: 'Gather the jack, lug wrench, and spare tire. Make sure the spare has air.' },
-      { title: 'Raise the car', description: 'Place the jack under the frame (not the plastic) and raise just enough to lift the wheel off the ground.' },
-      { title: 'Remove the old tire', description: 'Use the wrench to loosen lug nuts, remove them fully, and pull the tire straight toward you.' },
-      { title: 'Install the spare', description: 'Align the spare and push it onto the studs. Reinstall lug nuts by hand, then lower the car and tighten with the wrench.' },
-      { title: 'Drive carefully', description: 'Most spares are temporary. Drive slowly to a tire shop to repair or replace the damaged tire.' }
+      { title: 'Secure the car', description: 'Turn on hazard lights, apply the parking brake firmly, and place safety triangles or flares if you have them. Park on flat, solid ground.' },
+      { title: 'Inspect the tire & prepare tools', description: 'Locate the jack, lug wrench, and spare tire from the trunk. Check that the spare is properly inflated.' },
+      { title: 'Loosen lug nuts while on the ground (CRITICAL)', description: 'Before lifting the car, use the lug wrench to loosen each lug nut about half a turn counter-clockwise. Do NOT remove them yet. Doing this while the tire is on the ground prevents the wheel from spinning and protects the car from falling off the jack.' },
+      { title: 'Raise the car safely', description: 'Position the jack under the designated metal jacking point on the frame (refer to the owner\'s manual; never jack on plastic skirts). Raise until the tire clears the ground by 1–2 inches.' },
+      { title: 'Remove old tire', description: 'Fully remove the loosened lug nuts, place them in a safe spot (like the wheel cover), and pull the flat tire straight toward you off the wheel studs.' },
+      { title: 'Mount spare & snug lug nuts', description: 'Align the spare tire onto the studs. Hand-tighten all lug nuts in a criss-cross (star) pattern until snug against the wheel.' },
+      { title: 'Lower car & tighten firmly', description: 'Carefully lower the car back to the ground and remove the jack. Use the lug wrench to firmly tighten all lug nuts in a star pattern with your full body weight.' },
+      { title: 'Drive cautiously to a tire shop', description: 'Most donut spares have a speed limit of 50 mph (80 km/h) and a range of 50 miles. Drive directly to a repair shop to patch or replace the damaged tire.' }
     ]
   },
   {

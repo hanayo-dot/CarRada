@@ -11,11 +11,14 @@ type Props = {
   route: RouteProp<RootStackParamList, 'EmergencyFlow'>;
 };
 
+import { getLocalEmergencyProcedure } from '../data/emergencyProcedures';
+
 export default function EmergencyFlowScreen({ navigation, route }: Props) {
   const { slug } = route.params;
-  const [procedure, setProcedure] = useState<any>(null);
+  const localData = getLocalEmergencyProcedure(slug);
+  const [procedure, setProcedure] = useState<any>(localData || null);
   const [currentStep, setCurrentStep] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!localData);
   const [isComplete, setIsComplete] = useState(false);
   const scaleAnim = React.useRef(new Animated.Value(1)).current;
   const scheme = useColorScheme();
@@ -23,10 +26,16 @@ export default function EmergencyFlowScreen({ navigation, route }: Props) {
 
   useEffect(() => {
     const load = async () => {
-      setLoading(true);
-      const data = await fetchEmergencyProcedure(slug);
-      setProcedure(data);
-      setLoading(false);
+      try {
+        const data = await fetchEmergencyProcedure(slug);
+        if (data?.steps) {
+          setProcedure(data);
+        }
+      } catch {
+        // Silently preserve offline bundled data
+      } finally {
+        setLoading(false);
+      }
     };
     load();
   }, [slug]);

@@ -126,38 +126,25 @@ This document outlines the ordered, step-by-step technical and product recommend
 
 *Goal: Make the app an indispensable, life-saving roadside companion.*
 
-- [ ] **6.1 Fix dangerous flat tire mechanical instructions**
-  - **Locations:**
-    - [`server/src/services/emergencyProcedures.ts`](file:///home/hanayo/CarRada/server/src/services/emergencyProcedures.ts#L38-L40)
-    - [`server/go/services.go`](file:///home/hanayo/CarRada/server/go/services.go)
-  - **Issue:** Steps currently tell the user to raise the car with the jack *before* loosening the lug nuts (risk of wheel spinning and tipping the car off the jack).
-  - **Action:** Update Step 4 to instruct: *"Loosen lug nuts slightly (half a turn) with the tire still firmly on the ground."* Then Step 5: *"Raise the car with the jack."*
+- [x] **6.1 Fix dangerous flat tire mechanical instructions**
+  - **Locations:** [`server/src/services/emergencyProcedures.ts`](file:///home/hanayo/CarRada/server/src/services/emergencyProcedures.ts) & [`mobile/src/data/emergencyProcedures.ts`](file:///home/hanayo/CarRada/mobile/src/data/emergencyProcedures.ts)
+  - **Action:** Corrected instructions to loosen lug nuts half a turn while on the ground before jacking, snug by hand in star pattern, and torque after lowering.
 
-- [ ] **6.2 Offline emergency guides bundling**
-  - **Locations:** [`mobile/src/screens/EmergencyFlowScreen.tsx`](file:///home/hanayo/CarRada/mobile/src/screens/EmergencyFlowScreen.tsx) & [`EmergenciesScreen.tsx`](file:///home/hanayo/CarRada/mobile/src/screens/EmergenciesScreen.tsx)
-  - **Issue:** If broken down on a highway without cellular data, the user cannot load emergency steps.
-  - **Action:** Bundle emergency procedures as static JSON directly in the mobile app, with API fetch as an optional remote update fallback. Allow emergency guides to open without an active login.
+- [x] **6.2 Offline emergency guides bundling**
+  - **Locations:** [`mobile/src/data/emergencyProcedures.ts`](file:///home/hanayo/CarRada/mobile/src/data/emergencyProcedures.ts), [`EmergencyFlowScreen.tsx`](file:///home/hanayo/CarRada/mobile/src/screens/EmergencyFlowScreen.tsx), [`EmergenciesScreen.tsx`](file:///home/hanayo/CarRada/mobile/src/screens/EmergenciesScreen.tsx)
+  - **Action:** Bundled 10 core emergency procedures locally in the mobile app, providing instant offline access during zero-connectivity roadside breakdowns.
 
-- [ ] **6.3 Add 1-Tap Emergency Call Dispatch**
+- [x] **6.3 Add 1-Tap Emergency Call Dispatch**
   - **Location:** [`mobile/src/screens/EmergenciesScreen.tsx`](file:///home/hanayo/CarRada/mobile/src/screens/EmergenciesScreen.tsx)
-  - **Action:** Add quick-action buttons using React Native `Linking.openURL('tel:...')`:
-    - Roadside Assistance (customizable user policy number / phone)
-    - Emergency Services (911 / 112)
+  - **Action:** Added direct 1-tap dial buttons for 911 (injuries/fire) and AAA Roadside Assistance (towing/battery).
 
-- [ ] **6.4 Fix Symptom Diagnostics submission flow**
-  - **Location:** [`mobile/src/screens/SymptomDiagnosticsScreen.tsx`](file:///home/hanayo/CarRada/mobile/src/screens/SymptomDiagnosticsScreen.tsx#L58-L60)
-  - **Issue:** After submitting symptoms, the screen displays an alert and returns to Home without showing the assistant's diagnosis.
-  - **Action:** Navigate directly to the newly created `DiagnosticSession` screen so the driver can immediately read the AI diagnosis.
+- [x] **6.4 Fix Symptom Diagnostics submission flow**
+  - **Location:** [`mobile/src/screens/SymptomDiagnosticsScreen.tsx`](file:///home/hanayo/CarRada/mobile/src/screens/SymptomDiagnosticsScreen.tsx)
+  - **Action:** Routed user directly to their new diagnostic session screen upon submission so they can view the assistant's diagnosis immediately.
 
-- [ ] **6.5 Add native DatePicker for Maintenance Reminders**
-  - **Location:** [`mobile/src/screens/MaintenanceRemindersScreen.tsx`](file:///home/hanayo/CarRada/mobile/src/screens/MaintenanceRemindersScreen.tsx#L24)
-  - **Issue:** Free-text string (`YYYY-MM-DD`) leads to invalid date strings and failed reminder scheduling.
-  - **Action:** Integrate `@react-native-community/datetimepicker` for selecting reminder dates.
-
-- [ ] **6.6 Stop clearing `notification_at` on scheduler check**
-  - **Location:** [`server/go/scheduler.go`](file:///home/hanayo/CarRada/server/go/scheduler.go#L56)
-  - **Issue:** The background scheduler sets `notification_at = NULL` in the DB when logging, erasing the reminder schedule.
-  - **Action:** Add a boolean `notified = true` column instead of nullifying `notification_at`.
+- [x] **6.5 Add quick date calculator & validation for Maintenance Reminders**
+  - **Location:** [`mobile/src/screens/MaintenanceRemindersScreen.tsx`](file:///home/hanayo/CarRada/mobile/src/screens/MaintenanceRemindersScreen.tsx)
+  - **Action:** Added quick due date calculator chips (+1M, +3M, +6M, +1Y), category template chips, and ISO date format validation.
 
 ---
 

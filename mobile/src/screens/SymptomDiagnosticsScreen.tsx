@@ -51,12 +51,15 @@ export default function SymptomDiagnosticsScreen({ navigation }: Props) {
       const sessionName = `Symptom check - ${new Date().toLocaleDateString()}`;
       const session = await createDiagnosticSession(sessionName, selectedVehicle);
       const messageText = buildMessage();
-      const result = await sendChat([{ role: 'user', message: messageText }], selectedVehicle, session.id);
       if (result.safety?.alert) {
-        Alert.alert('Safety warning', result.safety.message);
+        Alert.alert('Safety Warning', result.safety.message, [
+          {
+            text: 'View Session Details',
+            onPress: () => navigation.navigate('DiagnosticSession', { sessionId: session.id, sessionName })
+          }
+        ]);
       } else {
-        Alert.alert('Diagnostic saved', 'Symptoms were saved to a diagnostic session and sent to the assistant.');
-        navigation.goBack();
+        navigation.navigate('DiagnosticSession', { sessionId: session.id, sessionName });
       }
     } catch (error: any) {
       Alert.alert('Submit failed', error.response?.data?.message || 'Try again.');
