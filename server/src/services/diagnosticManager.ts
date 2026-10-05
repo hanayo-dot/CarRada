@@ -1,7 +1,6 @@
 import { query } from '../db';
-import { User, Vehicle } from '../models';
-import axios from 'axios';
-import { CLAUDE_API_KEY } from './config';
+import { Vehicle } from '../models';
+import { callAI } from './aiClient';
 
 export async function createDiagnosticSession(userId: number, vehicleId: number | null, sessionName: string) {
   const result = await query(
@@ -42,22 +41,20 @@ export async function getSessionMessages(userId: number, sessionId: number) {
 async function buildSummaryPrompt(messages: { role: string; message: string }[], vehicle: Vehicle | null) {
   const vehicleSummary = vehicle
     ? `${vehicle.year} ${vehicle.make} ${vehicle.model}`
-    : 'Unknown vehicle';
+    : 'Vehicle without specific make/model';
 
   const conversationText = messages.map((m) => `${m.role === 'user' ? 'Owner' : 'Assistant'}: ${m.message}`).join('\n');
 
-  return `You are CarRada, a safety-first car assistant. Based on the following diagnostic session for ${vehicleSummary}, create a concise mechanic summary that the owner can copy and share.
+  return `You are CarRada, an automotive assistant. Based on the following diagnostic session for ${vehicleSummary}, create a concise mechanic summary that the owner can share with a repair shop:
 
 Guidelines:
-- Use plain English.
-- Do not claim certainty.
-- Include what the owner observed, likely causes, urgency, and next step recommendations.
-- Keep it short and shareable.
+- Explain what symptoms the owner observed.
+- List 2-3 likely potential causes.
+- Recommend the immediate next step.
+- Keep it concise (under 150 words).
 
-Diagnostic session:
-${conversationText}
-
-Mechanic summary:`;
+Diagnostic session history:
+${conversationText}`;
 }
 
 export async function generateDiagnosticSummary(userId: number, sessionId: number) {
@@ -67,29 +64,16 @@ export async function generateDiagnosticSummary(userId: number, sessionId: numbe
   }
 
   const messages = await getSessionMessages(userId, sessionId);
+  if (!messages.length) {
+    return { summary: 'No messages have been recorded in this diagnostic session yet.' };
+  }
+
   const vehicle = session.vehicle_id
     ? (await query('SELECT * FROM vehicles WHERE id = $1 AND user_id = $2', [session.vehicle_id, userId])).rows[0]
     : null;
 
   const prompt = await buildSummaryPrompt(messages, vehicle);
-  if (!CLAUDE_API_KEY) {
-    return { summary: 'Claude API key not configured. Set CLAUDE_API_KEY in server/.env to generate summaries.' };
-  }
+  const summaryText = await callAI([{ role: 'user', content: prompt }]);
 
-  const payload = {
-    model: 'claude-3.5-mini',
-    prompt,
-    max_tokens_to_sample: 300,
-    temperature: 0.3,
-    top_p: 1
-  };
-
-  const response = await axios.post('https://api.anthropic.com/v1/complete', payload, {
-    headers: {
-      'x-api-key': CLAUDE_API_KEY,
-      'Content-Type': 'application/json'
-    }
-  });
-
-  return { summary: response.data?.completion?.trim() || 'Unable to generate summary.' };
+  return { summary: summaryText };
 }

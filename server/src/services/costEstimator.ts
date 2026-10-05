@@ -1,41 +1,57 @@
-import axios from 'axios';
-import { CLAUDE_API_KEY } from './config';
-import { query } from '../db';
+import { callAI } from './aiClient';
 
-export async function generateRepairCostEstimate(description: string, vehicle: any | null) {
+export interface RepairCostEstimateResult {
+  estimate: string;
+  explanation: string;
+  detail: string;
+  partsRange?: string;
+  laborRange?: string;
+}
+
+export async function generateRepairCostEstimate(
+  description: string,
+  vehicle: any | null
+): Promise<RepairCostEstimateResult> {
   const vehicleInfo = vehicle
-    ? `Vehicle: ${vehicle.year} ${vehicle.make} ${vehicle.model}${vehicle.trim ? ' ' + vehicle.trim : ''}. Mileage: ${vehicle.mileage || 'unknown'}.`
-    : 'Vehicle information not provided.';
+    ? `Vehicle: ${vehicle.year} ${vehicle.make} ${vehicle.model}${vehicle.trim ? ' ' + vehicle.trim : ''}. Mileage: ${vehicle.mileage ? vehicle.mileage.toLocaleString() + ' miles' : 'unknown'}.`
+    : 'Vehicle: General vehicle (no make/model specified).';
 
-  const prompt = `You are CarRada, a safety-first car assistant. Based on the repair request below, provide a likely cost range and practical next steps.\n\n${vehicleInfo}\n\nProblem: ${description}\n\nInstructions:\n- Use US dollars as the currency unless the user indicates otherwise.\n- Give a short realistic cost range and a brief explanation of what affects the price.\n- Mention whether the repair is likely simple, moderate, or complex.\n- Recommend the next step for a new car owner.`;
+  const prompt = `You are CarRada, an automotive cost estimation assistant for new car owners.
+Estimate the realistic repair cost range for the following issue:
+${vehicleInfo}
+Problem description: "${description}"
 
-  if (!CLAUDE_API_KEY) {
-    return {
-      estimate: 'N/A',
-      explanation: 'Claude API key is not configured. Set CLAUDE_API_KEY in server/.env to get a live cost estimate.',
-      detail: `${vehicleInfo} Problem: ${description}`
-    };
-  }
+Provide your estimate as JSON with this exact format:
+{
+  "estimate": "$150 - $350 (Example realistic total range in USD)",
+  "partsRange": "$50 - $150 (Typical parts cost)",
+  "laborRange": "$100 - $200 (1 - 2 hours typical labor)",
+  "explanation": "Brief explanation of what components typically get replaced and factors that influence the price (independent shop vs dealership).",
+  "detail": "Practical recommendation for a new car owner (e.g. asking for an itemized estimate, checking for warranty coverage)."
+}`;
 
-  const payload = {
-    model: 'claude-3.5-mini',
-    prompt,
-    max_tokens_to_sample: 300,
-    temperature: 0.3,
-    top_p: 1
-  };
-
-  const response = await axios.post('https://api.anthropic.com/v1/complete', payload, {
-    headers: {
-      'x-api-key': CLAUDE_API_KEY,
-      'Content-Type': 'application/json'
+  try {
+    const rawResponse = await callAI([{ role: 'user', content: prompt }]);
+    const jsonMatch = rawResponse.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      const parsed = JSON.parse(jsonMatch[0]);
+      return {
+        estimate: parsed.estimate || '$100 - $300',
+        explanation: parsed.explanation || rawResponse,
+        detail: parsed.detail || 'Always request an itemized estimate before approving repairs.',
+        partsRange: parsed.partsRange,
+        laborRange: parsed.laborRange,
+      };
     }
-  });
 
-  const text = response.data?.completion?.trim() || 'Unable to generate an estimate.';
-  return {
-    estimate: text.split('\n')[0] || 'Estimate unavailable',
-    explanation: text,
-    detail: text
-  };
+    const firstLine = rawResponse.split('\n')[0] || '$100 - $300';
+    return {
+      estimate: firstLine,
+      explanation: rawResponse,
+      detail: rawResponse,
+    };
+  } catch (error: any) {
+    console.error('[CostEstimator] Error:', error.message);
+    throw error;
+  }
 }

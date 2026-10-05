@@ -7,8 +7,10 @@ node_modules/
 .expo-shared/
 
 # Build artifacts
-/dist/
-/build/
+dist/
+**/dist/
+build/
+**/build/
 *.log
 npm-debug.log*
 

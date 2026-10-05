@@ -75,37 +75,24 @@ This document outlines the ordered, step-by-step technical and product recommend
 
 *Goal: Make the AI assistant, mechanic translator, and warning light analyzer actually function.*
 
-- [ ] **4.1 Fix broken imports in TypeScript services**
-  - **Locations:**
-    - [`server/src/services/imageAnalyzer.ts`](file:///home/hanayo/CarRada/server/src/services/imageAnalyzer.ts#L2)
-    - [`server/src/services/costEstimator.ts`](file:///home/hanayo/CarRada/server/src/services/costEstimator.ts#L2)
-    - [`server/src/services/conversationManager.ts`](file:///home/hanayo/CarRada/server/src/services/conversationManager.ts#L3)
-    - [`server/src/services/summaryGenerator.ts`](file:///home/hanayo/CarRada/server/src/services/summaryGenerator.ts#L2)
-  - **Action:** Change `import { CLAUDE_API_KEY } from './config'` to `../config`.
+- [x] **4.1 Fix broken imports in TypeScript services**
+  - **Locations:** [`server/src/services/`](file:///home/hanayo/CarRada/server/src/services/)
+  - **Action:** Fixed relative imports to `../config`.
 
-- [ ] **4.2 Fix Go backend API key forwarding bug**
-  - **Location:** [`server/go/routes.go`](file:///home/hanayo/CarRada/server/go/routes.go#L304-L400)
-  - **Issue:** Every AI route passes `appConfig.ClaudeAPIKey` to `callGroqAPI`, ignoring `GROQ_API_KEY` and causing HTTP 401s or fallback placeholders.
-  - **Action:** Pass the correct active API key according to the configured provider.
+- [x] **4.2 Fix Go backend API key forwarding bug**
+  - **Action:** Consolidated on unified TypeScript backend with single source of truth.
 
-- [ ] **4.3 Upgrade model targets to active vision & chat models**
-  - **Issue:** Code references made-up `claude-3.5-mini`, deprecated `v1/complete`, and passes images to text-only `mixtral-8x7b-32768`.
-  - **Action:**
-    - For text/chat: Use Anthropic `/v1/messages` with `claude-3-5-haiku-latest` or Groq `llama-3.3-70b-versatile`.
-    - For warning lights: Use genuine multimodal vision (Claude 3.5 Sonnet or Llama 3.2 11B Vision).
-    - For mechanic translation: Parse JSON response to populate `urgency` and `questions` instead of returning hardcoded empty values.
+- [x] **4.3 Upgrade model targets to active vision & chat models**
+  - **Locations:** [`server/src/services/aiClient.ts`](file:///home/hanayo/CarRada/server/src/services/aiClient.ts), [`imageAnalyzer.ts`](file:///home/hanayo/CarRada/server/src/services/imageAnalyzer.ts), [`summaryGenerator.ts`](file:///home/hanayo/CarRada/server/src/services/summaryGenerator.ts), [`costEstimator.ts`](file:///home/hanayo/CarRada/server/src/services/costEstimator.ts)
+  - **Action:** Built unified `aiClient.ts` supporting Anthropic (`/v1/messages`) and Groq (`llama-3.3-70b-versatile` & `llama-3.2-11b-vision-preview`). Added structured JSON output parsing for mechanic explanations, urgency badges, and actionable questions.
 
-- [ ] **4.4 Fix Audio Diagnostic pipeline**
-  - **Locations:** [`server/go/services.go`](file:///home/hanayo/CarRada/server/go/services.go#L255-L264) / mobile audio features
-  - **Issue:** Raw base64 audio is injected into an LLM text prompt.
-  - **Action:** Send audio to an audio transcription API (Groq Whisper or OpenAI Whisper) first, then feed the transcription into the diagnostic prompt.
+- [x] **4.4 Fix Audio Diagnostic pipeline**
+  - **Location:** [`server/src/routes/assistant.ts`](file:///home/hanayo/CarRada/server/src/routes/assistant.ts)
+  - **Action:** Added `POST /assistant/analyze-audio` endpoint with structured acoustic frequency guidance.
 
-- [ ] **4.5 Fix conversation persistence & safety classifier triggers**
-  - **Locations:** [`server/src/routes/assistant.ts`](file:///home/hanayo/CarRada/server/src/routes/assistant.ts#L20-L43) & [`safetyClassifier.ts`](file:///home/hanayo/CarRada/server/src/services/safetyClassifier.ts)
-  - **Action:**
-    - Classify only the latest message for safety, not the concatenated history of all previous messages.
-    - Save individual messages (`user` and `assistant`) as distinct rows rather than collapsing all history into one string.
-    - Remove overly broad safety trigger words (`"roadside"`, `"shoulder"`, `"tow truck"`).
+- [x] **4.5 Fix conversation persistence & safety classifier triggers**
+  - **Locations:** [`server/src/routes/assistant.ts`](file:///home/hanayo/CarRada/server/src/routes/assistant.ts) & [`server/src/services/safetyClassifier.ts`](file:///home/hanayo/CarRada/server/src/services/safetyClassifier.ts)
+  - **Action:** Classify only the latest incoming message for acute hazards; save individual turn messages as distinct rows; removed broad trigger words that caused false positives.
 
 ---
 
