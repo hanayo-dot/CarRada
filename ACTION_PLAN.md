@@ -34,23 +34,18 @@ This document outlines the ordered, step-by-step technical and product recommend
 
 *Goal: Ensure any fresh setup with PostgreSQL runs without "table does not exist" crashes.*
 
-- [ ] **2.1 Author `db/migrations/0001_init.sql`**
-  - **Location:** Create `db/migrations/0001_init.sql`
-  - **Action:** Define tables with foreign keys and indexes:
-    - `users` (`id`, `email UNIQUE`, `password_hash`, `name`, `created_at`, `updated_at`)
-    - `vehicles` (`id`, `user_id REFERENCES users`, `name`, `make`, `model`, `year`, `trim`, `engine`, `fuel_type`, `transmission`, `mileage`, `vin`, timestamps)
-    - `diagnostic_sessions` (`id`, `user_id REFERENCES users`, `vehicle_id REFERENCES vehicles`, `session_name`, `status`, timestamps)
-    - `conversations` (`id`, `user_id`, `vehicle_id`, `diagnostic_session_id REFERENCES diagnostic_sessions`, `role`, `message`, `created_at`)
-    - `maintenance_reminders` (`id`, `user_id REFERENCES users`, `description`, `due_date`, `due_mileage`, `completed`, `notification_enabled`, `notification_days`, `notification_at`, timestamps)
-    - `uploaded_images` (`id`, `user_id`, `key`, `url`, `type`, `created_at`)
+- [x] **2.1 Author `db/migrations/0001_init.sql`**
+  - **Location:** [`db/migrations/0001_init.sql`](file:///home/hanayo/CarRada/db/migrations/0001_init.sql)
+  - **Action:** Created relational schema covering `users`, `vehicles`, `diagnostic_sessions`, `conversations`, `maintenance_reminders`, and `uploaded_images` with appropriate foreign keys and performance indexes.
 
-- [ ] **2.2 Implement auto-migration on server boot**
-  - **Action:** Add a database initialization step on startup that runs pending SQL migrations or loads `0001_init.sql` if tables do not exist.
+- [x] **2.2 Implement auto-migration on server boot**
+  - **Locations:** [`server/src/db.ts`](file:///home/hanayo/CarRada/server/src/db.ts) & [`server/src/index.ts`](file:///home/hanayo/CarRada/server/src/index.ts)
+  - **Action:** Added transactional schema migration runner using `schema_migrations` tracking table so any new environment automatically migrates on startup.
 
-- [ ] **2.3 Fix Vehicle update query overwriting missing fields**
-  - **Location:** [`server/src/routes/vehicles.ts`](file:///home/hanayo/CarRada/server/src/routes/vehicles.ts#L38-L41)
-  - **Issue:** Updating a single field (like mileage) sets all other vehicle fields to `null`.
-  - **Action:** Use dynamic SQL building or `COALESCE($1, name)` so omitted properties retain their existing values.
+- [x] **2.3 Fix Vehicle update query overwriting missing fields**
+  - **Location:** [`server/src/routes/vehicles.ts`](file:///home/hanayo/CarRada/server/src/routes/vehicles.ts)
+  - **Issue:** Updating a single field (like mileage) set all other vehicle fields to `null`.
+  - **Action:** Implemented safe partial update defaulting, validation for year/mileage, and numeric route parameter guards.
 
 ---
 
