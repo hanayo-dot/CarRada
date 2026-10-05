@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, StyleSheet, useColorScheme, ActivityIndicator, Alert, ScrollView } from 'react-native';
+import { View, Text, FlatList, StyleSheet, useColorScheme, ActivityIndicator, Alert } from 'react-native';
 import { palette } from '../theme';
 import { fetchLessons } from '../api/api';
 import { Lesson, RootStackParamList } from '../types';
@@ -21,7 +21,7 @@ export default function DailyLessonsScreen({ navigation }: Props) {
       try {
         const data = await fetchLessons();
         setDailyLesson(data.dailyLesson);
-        setLessons(data.lessons);
+        setLessons(data.lessons || []);
       } catch (error: any) {
         Alert.alert('Load failed', error.response?.data?.message || 'Unable to load lessons.');
       } finally {
@@ -41,44 +41,59 @@ export default function DailyLessonsScreen({ navigation }: Props) {
     </View>
   );
 
-  return (
-    <ScrollView style={[styles.container, { backgroundColor: colors.background }]} contentContainerStyle={styles.content}>
+  const renderHeader = () => (
+    <>
       <Text style={[styles.title, { color: colors.text }]}>Daily car lessons</Text>
       <Text style={[styles.subtitle, { color: colors.muted }]}>Learn one practical car owner skill every day.</Text>
-      {loading ? (
-        <ActivityIndicator size='large' color={colors.primary} style={styles.loader} />
-      ) : (
-        <>
-          {dailyLesson && (
-            <View style={[styles.highlightCard, { backgroundColor: colors.surface }]}> 
-              <Text style={[styles.lessonTitle, { color: colors.primary }]}>{dailyLesson.title}</Text>
-              <Text style={[styles.lessonDescription, { color: colors.muted }]}>{dailyLesson.description}</Text>
-              {dailyLesson.content.map((paragraph, index) => (
-                <Text key={index} style={[styles.lessonText, { color: colors.text }]}>{paragraph}</Text>
-              ))}
-            </View>
-          )}
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>More lessons</Text>
-          <FlatList
-            data={lessons}
-            keyExtractor={(item) => item.id.toString()}
-            renderItem={renderLesson}
-            scrollEnabled={false}
-            ListEmptyComponent={<Text style={[styles.emptyText, { color: colors.muted }]}>No lessons available.</Text>}
-          />
-        </>
+
+      {dailyLesson && (
+        <View style={[styles.highlightCard, { backgroundColor: colors.surface, borderColor: colors.primary, borderWidth: 1 }]}> 
+          <View style={[styles.badge, { backgroundColor: colors.primary }]}>
+            <Text style={styles.badgeText}>TODAY'S SKILL</Text>
+          </View>
+          <Text style={[styles.highlightTitle, { color: colors.text }]}>{dailyLesson.title}</Text>
+          <Text style={[styles.lessonDescription, { color: colors.muted }]}>{dailyLesson.description}</Text>
+          {dailyLesson.content.map((paragraph, index) => (
+            <Text key={index} style={[styles.lessonText, { color: colors.text }]}>{paragraph}</Text>
+          ))}
+        </View>
       )}
-    </ScrollView>
+
+      <Text style={[styles.sectionTitle, { color: colors.text }]}>All lessons & guides</Text>
+    </>
+  );
+
+  if (loading) {
+    return (
+      <View style={[styles.container, styles.center, { backgroundColor: colors.background }]}>
+        <ActivityIndicator size='large' color={colors.primary} />
+      </View>
+    );
+  }
+
+  return (
+    <FlatList
+      style={[styles.container, { backgroundColor: colors.background }]}
+      contentContainerStyle={styles.content}
+      data={lessons}
+      keyExtractor={(item) => item.id.toString()}
+      renderItem={renderLesson}
+      ListHeaderComponent={renderHeader}
+      ListEmptyComponent={<Text style={[styles.emptyText, { color: colors.muted }]}>No lessons available.</Text>}
+    />
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  center: { justifyContent: 'center', alignItems: 'center' },
   content: { padding: 20, paddingBottom: 40 },
   title: { fontSize: 28, fontWeight: '700', marginBottom: 8 },
   subtitle: { fontSize: 16, marginBottom: 20, lineHeight: 22 },
-  loader: { marginTop: 20 },
+  badge: { alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8, marginBottom: 10 },
+  badgeText: { color: '#fff', fontSize: 11, fontWeight: '800', letterSpacing: 0.8 },
   highlightCard: { borderRadius: 20, padding: 20, marginBottom: 24 },
+  highlightTitle: { fontSize: 20, fontWeight: '800', marginBottom: 8 },
   lessonCard: { borderRadius: 18, padding: 18, marginBottom: 18 },
   lessonTitle: { fontSize: 18, fontWeight: '700', marginBottom: 8 },
   lessonDescription: { fontSize: 14, marginBottom: 12, lineHeight: 20 },

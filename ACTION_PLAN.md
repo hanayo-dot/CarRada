@@ -100,27 +100,25 @@ This document outlines the ordered, step-by-step technical and product recommend
 
 *Goal: Make the mobile app functional, scrollable, and connected.*
 
-- [ ] **5.1 Fix `HomeScreen` viewport truncation**
-  - **Location:** [`mobile/src/screens/HomeScreen.tsx`](file:///home/hanayo/CarRada/mobile/src/screens/HomeScreen.tsx#L39-L95)
-  - **Issue:** 9 large cards are rendered inside an unscrollable `<View>`. Cards 5 to 9 (Emergencies, Mechanic Translator, Diagnostics) are pushed off the screen on standard phones.
-  - **Action:** Wrap the entire screen content in `<ScrollView showsVerticalScrollIndicator={false}>`.
+- [x] **5.1 Fix `HomeScreen` viewport truncation**
+  - **Location:** [`mobile/src/screens/HomeScreen.tsx`](file:///home/hanayo/CarRada/mobile/src/screens/HomeScreen.tsx)
+  - **Action:** Wrapped screen in `<ScrollView>` so all 9 feature cards and sign-out controls are accessible on any mobile device viewport.
 
-- [ ] **5.2 Fix missing `ScrollView` on `RepairCostEstimatorScreen`**
-  - **Location:** [`mobile/src/screens/RepairCostEstimatorScreen.tsx`](file:///home/hanayo/CarRada/mobile/src/screens/RepairCostEstimatorScreen.tsx#L53)
-  - **Action:** Wrap screen in `<ScrollView>` so vehicle selection and results are scrollable.
+- [x] **5.2 Fix missing `ScrollView` on `RepairCostEstimatorScreen`**
+  - **Location:** [`mobile/src/screens/RepairCostEstimatorScreen.tsx`](file:///home/hanayo/CarRada/mobile/src/screens/RepairCostEstimatorScreen.tsx)
+  - **Action:** Wrapped screen in `<ScrollView>` and added structured parts/labor range badges and vehicle selection toggling.
 
-- [ ] **5.3 Fix nested VirtualizedList warning in `DailyLessonsScreen`**
-  - **Location:** [`mobile/src/screens/DailyLessonsScreen.tsx`](file:///home/hanayo/CarRada/mobile/src/screens/DailyLessonsScreen.tsx#L45-L69)
-  - **Action:** Replace outer `ScrollView` + inner `FlatList` with a single `FlatList` containing `ListHeaderComponent`.
+- [x] **5.3 Fix nested VirtualizedList warning in `DailyLessonsScreen`**
+  - **Location:** [`mobile/src/screens/DailyLessonsScreen.tsx`](file:///home/hanayo/CarRada/mobile/src/screens/DailyLessonsScreen.tsx)
+  - **Action:** Converted nested `ScrollView` + `FlatList` to a single root `FlatList` utilizing `ListHeaderComponent`.
 
-- [ ] **5.4 Configurable API Base URL**
-  - **Location:** [`mobile/src/api/api.ts`](file:///home/hanayo/CarRada/mobile/src/api/api.ts#L4)
-  - **Issue:** Hardcoded `http://localhost:4000` fails on Android emulators and physical phones.
-  - **Action:** Use `process.env.EXPO_PUBLIC_API_URL || (Platform.OS === 'android' ? 'http://10.0.2.2:4000' : 'http://localhost:4000')`.
+- [x] **5.4 Configurable API Base URL**
+  - **Location:** [`mobile/src/api/api.ts`](file:///home/hanayo/CarRada/mobile/src/api/api.ts)
+  - **Action:** Implemented `EXPO_PUBLIC_API_URL` with automatic platform fallback (`10.0.2.2:4000` for Android emulator, `localhost:4000` for iOS/web).
 
-- [ ] **5.5 Add `KeyboardAvoidingView` on Auth screens**
+- [x] **5.5 Add `KeyboardAvoidingView` on Auth screens**
   - **Locations:** [`mobile/src/screens/LoginScreen.tsx`](file:///home/hanayo/CarRada/mobile/src/screens/LoginScreen.tsx) & [`SignupScreen.tsx`](file:///home/hanayo/CarRada/mobile/src/screens/SignupScreen.tsx)
-  - **Action:** Wrap inputs in `KeyboardAvoidingView` so the virtual keyboard does not block the inputs and submit button.
+  - **Action:** Added `KeyboardAvoidingView` so mobile keyboards do not obscure inputs or submit buttons.
 
 ---
 
