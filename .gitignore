@@ -1,19 +1,31 @@
+# Dependencies
 node_modules/
+**/node_modules/
+
+# Expo & Mobile
 .expo/
 .expo-shared/
-*.log
+
+# Build artifacts
 /dist/
 /build/
-.env
-.env.local
-**/node_modules/
-**/package-lock.json
-**/yarn.lock
-**/pnpm-lock.yaml
-.DS_Store
+*.log
 npm-debug.log*
+
+# Environment secrets
+.env
+.env.*
+!.env.example
+
+# Local SQLite databases (preserve SQL migrations!)
 **/*.db
 **/*.sqlite
 **/*.sqlite3
-**/*.sql
-.env
+
+# Binaries
+carrada-server
+**/carrada-server
+
+# System
+.DS_Store
+Thumbs.db
