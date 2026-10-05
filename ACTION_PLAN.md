@@ -53,25 +53,21 @@ This document outlines the ordered, step-by-step technical and product recommend
 
 *Goal: Protect user data, prevent session drops, and secure API endpoints.*
 
-- [ ] **3.1 Forbid insecure default JWT secrets**
-  - **Locations:** [`server/src/config.ts`](file:///home/hanayo/CarRada/server/src/config.ts#L7) / [`server/go/config.go`](file:///home/hanayo/CarRada/server/go/config.go#L24)
-  - **Action:** If `JWT_SECRET` is unset or equals `'unsafe-default-jwt-secret'`, refuse to start the server in production.
+- [x] **3.1 Forbid insecure default JWT secrets**
+  - **Location:** [`server/src/config.ts`](file:///home/hanayo/CarRada/server/src/config.ts)
+  - **Action:** Enforced strict check refusing to start with fallback secret in production, warning in development.
 
-- [ ] **3.2 Implement persistent token storage on mobile**
-  - **Location:** [`mobile/src/App.tsx`](file:///home/hanayo/CarRada/mobile/src/App.tsx#L26) and [`mobile/src/api/api.ts`](file:///home/hanayo/CarRada/mobile/src/api/api.ts#L10)
-  - **Issue:** JWT is kept only in `useState(null)`. Closing or refreshing the app logs the user out.
-  - **Action:** Install `expo-secure-store`. Save the token on login/signup, read it during app startup splash, and attach it to API client requests.
+- [x] **3.2 Implement persistent token storage on mobile**
+  - **Locations:** [`mobile/src/context/AuthContext.tsx`](file:///home/hanayo/CarRada/mobile/src/context/AuthContext.tsx) & [`mobile/src/api/api.ts`](file:///home/hanayo/CarRada/mobile/src/api/api.ts)
+  - **Action:** Stored JWT securely with `expo-secure-store`. Automatically restores session on app restart and validates against `/auth/me`.
 
-- [ ] **3.3 Add Sign Out / Account settings in mobile**
-  - **Location:** [`mobile/src/screens/HomeScreen.tsx`](file:///home/hanayo/CarRada/mobile/src/screens/HomeScreen.tsx)
-  - **Action:** Add a profile/logout button in the navigation header or home screen that clears `expo-secure-store` and resets the auth state.
+- [x] **3.3 Add Sign Out / Account settings in mobile**
+  - **Locations:** [`mobile/src/App.tsx`](file:///home/hanayo/CarRada/mobile/src/App.tsx) & [`mobile/src/screens/HomeScreen.tsx`](file:///home/hanayo/CarRada/mobile/src/screens/HomeScreen.tsx)
+  - **Action:** Added Sign Out buttons in the navigation header and dashboard footer that clear SecureStore and reset auth state.
 
-- [ ] **3.4 Sanitize error responses and add rate limiting**
-  - **Locations:** Server error handlers and route middleware
-  - **Action:**
-    - Stop returning raw SQL errors (`err.message` / `err.Error()`) to clients in production.
-    - Add `express-rate-limit` on `/auth/login`, `/auth/signup`, and `/assistant/*` routes.
-    - Set `express.json({ limit: '15mb' })` to handle dashboard photo uploads without crashing with HTTP 413.
+- [x] **3.4 Sanitize error responses and add rate limiting**
+  - **Locations:** [`server/src/app.ts`](file:///home/hanayo/CarRada/server/src/app.ts) & [`server/src/routes/auth.ts`](file:///home/hanayo/CarRada/server/src/routes/auth.ts)
+  - **Action:** Added `express-rate-limit` for auth (30/15m) and assistant (20/1m) routes, sanitized 500 error outputs in production, and handled duplicate email 409 conflicts.
 
 ---
 

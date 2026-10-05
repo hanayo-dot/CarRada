@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StatusBar } from 'expo-status-bar';
+import { ActivityIndicator, View, Pressable, Text } from 'react-native';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import LoginScreen from './screens/LoginScreen';
 import SignupScreen from './screens/SignupScreen';
 import HomeScreen from './screens/HomeScreen';
@@ -18,49 +20,74 @@ import RepairCostEstimatorScreen from './screens/RepairCostEstimatorScreen';
 import DiagnosticSessionsScreen from './screens/DiagnosticSessionsScreen';
 import DiagnosticSessionDetailScreen from './screens/DiagnosticSessionDetailScreen';
 import { RootStackParamList } from './types';
-import { setAuthToken } from './api/api';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
-export default function App() {
-  const [token, setTokenState] = useState<string | null>(null);
+function NavigationRoot() {
+  const { token, loading, signOut } = useAuth();
 
-  const setToken = (tokenValue: string | null) => {
-    setTokenState(tokenValue);
-    setAuthToken(tokenValue);
-  };
+  if (loading) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#0B1320' }}>
+        <ActivityIndicator size="large" color="#3B82F6" />
+      </View>
+    );
+  }
 
   return (
-    <NavigationContainer>
-      <StatusBar style='light' />
-      <Stack.Navigator screenOptions={{ headerShown: true }}>
-        {token ? (
-          <>
-            <Stack.Screen name='Home' component={HomeScreen} options={{ title: 'CarRada' }} />
-            <Stack.Screen name='Vehicles' component={VehiclesScreen} options={{ title: 'Vehicles' }} />
-            <Stack.Screen name='VehicleEditor' component={VehicleEditorScreen} options={{ title: 'Vehicle' }} />
-            <Stack.Screen name='Chat' component={ChatScreen} options={{ title: 'AI Car Assistant' }} />
-            <Stack.Screen name='MechanicTranslator' component={MechanicTranslatorScreen} options={{ title: 'Mechanic Translator' }} />
-            <Stack.Screen name='Diagnostics' component={DiagnosticSessionsScreen} options={{ title: 'Diagnostics' }} />
-            <Stack.Screen name='DiagnosticSession' component={DiagnosticSessionDetailScreen} options={({ route }) => ({ title: route.params.sessionName })} />
-            <Stack.Screen name='Emergencies' component={EmergenciesScreen} options={{ title: 'Emergency Assistant' }} />
-            <Stack.Screen name='EmergencyFlow' component={EmergencyFlowScreen} options={({ route }) => ({ title: route.params.title })} />
-            <Stack.Screen name='Reminders' component={MaintenanceRemindersScreen} options={{ title: 'Reminders' }} />
-            <Stack.Screen name='SymptomDiagnostics' component={SymptomDiagnosticsScreen} options={{ title: 'Symptom Diagnostics' }} />
-            <Stack.Screen name='Lessons' component={DailyLessonsScreen} options={{ title: 'Daily Lessons' }} />
-            <Stack.Screen name='RepairCostEstimator' component={RepairCostEstimatorScreen} options={{ title: 'Repair Cost Estimator' }} />
-          </>
-        ) : (
-          <>
-            <Stack.Screen name='Login'>
-              {(props) => <LoginScreen {...props} setToken={setToken} />}
-            </Stack.Screen>
-            <Stack.Screen name='Signup'>
-              {(props) => <SignupScreen {...props} setToken={setToken} />}
-            </Stack.Screen>
-          </>
-        )}
-      </Stack.Navigator>
-    </NavigationContainer>
+    <Stack.Navigator screenOptions={{ headerShown: true }}>
+      {token ? (
+        <>
+          <Stack.Screen
+            name="Home"
+            component={HomeScreen}
+            options={{
+              title: 'CarRada',
+              headerRight: () => (
+                <Pressable onPress={signOut} style={{ padding: 8 }}>
+                  <Text style={{ color: '#EF4444', fontWeight: '600', fontSize: 14 }}>Sign Out</Text>
+                </Pressable>
+              ),
+            }}
+          />
+          <Stack.Screen name="Vehicles" component={VehiclesScreen} options={{ title: 'Vehicles' }} />
+          <Stack.Screen name="VehicleEditor" component={VehicleEditorScreen} options={{ title: 'Vehicle' }} />
+          <Stack.Screen name="Chat" component={ChatScreen} options={{ title: 'AI Car Assistant' }} />
+          <Stack.Screen name="MechanicTranslator" component={MechanicTranslatorScreen} options={{ title: 'Mechanic Translator' }} />
+          <Stack.Screen name="Diagnostics" component={DiagnosticSessionsScreen} options={{ title: 'Diagnostics' }} />
+          <Stack.Screen
+            name="DiagnosticSession"
+            component={DiagnosticSessionDetailScreen}
+            options={({ route }) => ({ title: route.params.sessionName })}
+          />
+          <Stack.Screen name="Emergencies" component={EmergenciesScreen} options={{ title: 'Emergency Assistant' }} />
+          <Stack.Screen
+            name="EmergencyFlow"
+            component={EmergencyFlowScreen}
+            options={({ route }) => ({ title: route.params.title })}
+          />
+          <Stack.Screen name="Reminders" component={MaintenanceRemindersScreen} options={{ title: 'Reminders' }} />
+          <Stack.Screen name="SymptomDiagnostics" component={SymptomDiagnosticsScreen} options={{ title: 'Symptom Diagnostics' }} />
+          <Stack.Screen name="Lessons" component={DailyLessonsScreen} options={{ title: 'Daily Lessons' }} />
+          <Stack.Screen name="RepairCostEstimator" component={RepairCostEstimatorScreen} options={{ title: 'Repair Cost Estimator' }} />
+        </>
+      ) : (
+        <>
+          <Stack.Screen name="Login" component={LoginScreen} options={{ title: 'Sign In', headerShown: false }} />
+          <Stack.Screen name="Signup" component={SignupScreen} options={{ title: 'Sign Up', headerShown: false }} />
+        </>
+      )}
+    </Stack.Navigator>
+  );
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <NavigationContainer>
+        <StatusBar style="light" />
+        <NavigationRoot />
+      </NavigationContainer>
+    </AuthProvider>
   );
 }
