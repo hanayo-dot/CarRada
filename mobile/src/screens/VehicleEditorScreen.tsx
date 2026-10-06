@@ -30,24 +30,25 @@ const fieldLabels: Record<string, string> = {
 export default function VehicleEditorScreen({ navigation, route }: Props) {
   const [vehicle, setVehicle] = useState<Partial<Vehicle>>({ name: '', make: '', model: '', year: new Date().getFullYear() });
   const [loading, setLoading] = useState(false);
-  const isEditing = !!route.params?.vehicleId;
+  const vehicleId = route.params?.vehicleId;
+  const isEditing = !!vehicleId;
   const scheme = useColorScheme();
   const colors = palette(scheme);
 
   useEffect(() => {
     const load = async () => {
-      if (!isEditing) return;
+      if (!isEditing || !vehicleId) return;
       setLoading(true);
       try {
         const data = await fetchVehicles();
-        const found = data.find((item: Vehicle) => item.id === route.params.vehicleId);
+        const found = data.find((item: Vehicle) => item.id === vehicleId);
         if (found) setVehicle(found);
       } finally {
         setLoading(false);
       }
     };
     load();
-  }, [route.params?.vehicleId, isEditing]);
+  }, [vehicleId, isEditing]);
 
   const handleSave = async () => {
     if (!vehicle.name || !vehicle.make || !vehicle.model || !vehicle.year) {
@@ -55,8 +56,8 @@ export default function VehicleEditorScreen({ navigation, route }: Props) {
     }
     setLoading(true);
     try {
-      if (isEditing) {
-        await updateVehicle(route.params.vehicleId!, vehicle);
+      if (isEditing && vehicleId) {
+        await updateVehicle(vehicleId, vehicle);
       } else {
         await createVehicle(vehicle);
       }
@@ -69,6 +70,7 @@ export default function VehicleEditorScreen({ navigation, route }: Props) {
   };
 
   const handleDelete = async () => {
+    if (!vehicleId) return;
     Alert.alert('Delete vehicle?', 'This cannot be undone.', [
       { text: 'Cancel', style: 'cancel' },
       {
@@ -77,7 +79,7 @@ export default function VehicleEditorScreen({ navigation, route }: Props) {
         onPress: async () => {
           setLoading(true);
           try {
-            await deleteVehicle(route.params.vehicleId!);
+            await deleteVehicle(vehicleId);
             navigation.goBack();
           } catch (error: any) {
             Alert.alert('Delete failed', error.response?.data?.message || 'Please try again.');

@@ -17,6 +17,9 @@ const client = axios.create({
 
 export async function getStoredToken(): Promise<string | null> {
   try {
+    if (Platform.OS === 'web' && typeof localStorage !== 'undefined') {
+      return localStorage.getItem(TOKEN_KEY);
+    }
     return await SecureStore.getItemAsync(TOKEN_KEY);
   } catch (error) {
     console.warn('[SecureStore] Failed to read auth token:', error);
@@ -26,6 +29,10 @@ export async function getStoredToken(): Promise<string | null> {
 
 export async function storeToken(token: string): Promise<void> {
   try {
+    if (Platform.OS === 'web' && typeof localStorage !== 'undefined') {
+      localStorage.setItem(TOKEN_KEY, token);
+      return;
+    }
     await SecureStore.setItemAsync(TOKEN_KEY, token);
   } catch (error) {
     console.warn('[SecureStore] Failed to store auth token:', error);
@@ -34,6 +41,10 @@ export async function storeToken(token: string): Promise<void> {
 
 export async function removeStoredToken(): Promise<void> {
   try {
+    if (Platform.OS === 'web' && typeof localStorage !== 'undefined') {
+      localStorage.removeItem(TOKEN_KEY);
+      return;
+    }
     await SecureStore.deleteItemAsync(TOKEN_KEY);
   } catch (error) {
     console.warn('[SecureStore] Failed to remove auth token:', error);

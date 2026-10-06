@@ -51,6 +51,7 @@ export default function SymptomDiagnosticsScreen({ navigation }: Props) {
       const sessionName = `Symptom check - ${new Date().toLocaleDateString()}`;
       const session = await createDiagnosticSession(sessionName, selectedVehicle);
       const messageText = buildMessage();
+      const result = await sendChat([{ role: 'user', message: messageText }], selectedVehicle, session.id);
       if (result.safety?.alert) {
         Alert.alert('Safety Warning', result.safety.message, [
           {

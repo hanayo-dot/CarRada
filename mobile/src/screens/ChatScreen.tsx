@@ -24,7 +24,7 @@ export default function ChatScreen({ navigation }: Props) {
     const loadData = async () => {
       try {
         const [history, sessionData] = await Promise.all([fetchConversationHistory(), fetchDiagnosticSessions()]);
-        setMessages(history.map((item: any) => ({ role: item.role, message: item.message })));
+        setMessages(history.map((item: any) => ({ role: (item.role === 'assistant' ? 'assistant' : 'user') as 'user' | 'assistant', message: item.message })));
         setSessions(sessionData);
         if (sessionData.length) {
           setSelectedSession(sessionData[0]);
@@ -38,7 +38,7 @@ export default function ChatScreen({ navigation }: Props) {
 
   const handleSend = async () => {
     if (!input.trim()) return;
-    const newMessages = [...messages, { role: 'user', message: input.trim() }];
+    const newMessages: ConversationMessage[] = [...messages, { role: 'user', message: input.trim() }];
     setMessages(newMessages);
     setInput('');
     setLoading(true);
