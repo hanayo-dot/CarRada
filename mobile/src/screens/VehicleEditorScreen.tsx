@@ -5,6 +5,8 @@ import { RouteProp } from '@react-navigation/native';
 import { palette } from '../theme';
 import { createVehicle, fetchVehicles, updateVehicle, deleteVehicle } from '../api/api';
 import { RootStackParamList, Vehicle } from '../types';
+import MercedesAmbientLight from '../components/MercedesAmbientLight';
+import MercedesCard from '../components/MercedesCard';
 
 type Props = {
   navigation: NativeStackNavigationProp<RootStackParamList, 'VehicleEditor'>;
@@ -15,16 +17,16 @@ const essentialFields = ['name', 'make', 'model', 'year'];
 const optionalFields = ['trim', 'engine', 'fuel_type', 'transmission', 'mileage', 'vin'];
 
 const fieldLabels: Record<string, string> = {
-  name: 'Nickname (e.g., "My Honda")',
-  make: 'Make',
-  model: 'Model',
-  year: 'Year',
-  trim: 'Trim (optional)',
-  engine: 'Engine (optional)',
-  fuel_type: 'Fuel type (optional)',
-  transmission: 'Transmission (optional)',
-  mileage: 'Mileage (optional)',
-  vin: 'VIN (optional)'
+  name: 'Vehicle Nickname (e.g., "Silver Arrow / E350")',
+  make: 'Make (e.g. Mercedes-Benz, BMW, Toyota)',
+  model: 'Model (e.g. C300, Civic, RAV4)',
+  year: 'Model Year (e.g. 2024)',
+  trim: 'Trim / Edition (optional)',
+  engine: 'Engine displacement (e.g. 2.0L Turbo)',
+  fuel_type: 'Powertrain (Gas, Hybrid, EV)',
+  transmission: 'Transmission (e.g. 9G-TRONIC, 8-Speed)',
+  mileage: 'Odometer Mileage',
+  vin: 'VIN Telemetry Code (17 digits)'
 };
 
 export default function VehicleEditorScreen({ navigation, route }: Props) {
@@ -52,7 +54,7 @@ export default function VehicleEditorScreen({ navigation, route }: Props) {
 
   const handleSave = async () => {
     if (!vehicle.name || !vehicle.make || !vehicle.model || !vehicle.year) {
-      return Alert.alert('Missing info', 'Nickname, make, model, and year are required.');
+      return Alert.alert('Telemetry Incomplete', 'Nickname, make, model, and year are required.');
     }
     setLoading(true);
     try {
@@ -63,7 +65,7 @@ export default function VehicleEditorScreen({ navigation, route }: Props) {
       }
       navigation.goBack();
     } catch (error: any) {
-      Alert.alert('Save failed', error.response?.data?.message || 'Please try again.');
+      Alert.alert('Save Failed', error.response?.data?.message || 'Please check input data.');
     } finally {
       setLoading(false);
     }
@@ -71,10 +73,10 @@ export default function VehicleEditorScreen({ navigation, route }: Props) {
 
   const handleDelete = async () => {
     if (!vehicleId) return;
-    Alert.alert('Delete vehicle?', 'This cannot be undone.', [
+    Alert.alert('De-register Vehicle?', 'This will permanently remove telemetry history for this vehicle.', [
       { text: 'Cancel', style: 'cancel' },
       {
-        text: 'Delete',
+        text: 'De-register',
         style: 'destructive',
         onPress: async () => {
           setLoading(true);
@@ -91,46 +93,74 @@ export default function VehicleEditorScreen({ navigation, route }: Props) {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}> 
-      <ScrollView showsVerticalScrollIndicator={false}>
-        <Text style={[styles.title, { color: colors.text }]}>{isEditing ? 'Edit vehicle' : 'Add vehicle'}</Text>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <MercedesAmbientLight color={colors.primary} height={2} />
+
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
+        <View style={styles.header}>
+          <Text style={[styles.hudLabel, { color: colors.primary }]}>MBUX TELEMETRY PROFILER</Text>
+          <Text style={[styles.title, { color: colors.text }]}>
+            {isEditing ? 'Configure Vehicle' : 'Register New Car'}
+          </Text>
+        </View>
+
         {loading && !isEditing ? (
-          <ActivityIndicator size='large' color={colors.primary} />
+          <ActivityIndicator size='large' color={colors.primary} style={{ marginTop: 40 }} />
         ) : (
           <>
-            <Text style={[styles.sectionLabel, { color: colors.muted }]}>Essential</Text>
-            {essentialFields.map((field) => (
-              <TextInput
-                key={field}
-                style={[styles.input, { backgroundColor: colors.surface, color: colors.text }]}
-                placeholder={fieldLabels[field]}
-                placeholderTextColor={colors.muted}
-                value={vehicle[field as keyof Vehicle]?.toString() ?? ''}
-                onChangeText={(value) => setVehicle((prev) => ({ ...prev, [field]: field === 'year' ? Number(value) : value }))}
-                keyboardType={field === 'year' ? 'numeric' : 'default'}
-              />
-            ))}
+            <MercedesCard colors={colors} style={styles.sectionCard} highlightColor={colors.primary}>
+              <Text style={[styles.sectionHeading, { color: colors.primary }]}>ESSENTIAL SPECIFICATIONS</Text>
+              {essentialFields.map((field) => (
+                <View key={field} style={styles.inputWrap}>
+                  <Text style={[styles.inputLabel, { color: colors.muted }]}>{fieldLabels[field]}</Text>
+                  <TextInput
+                    style={[styles.input, { backgroundColor: colors.surfaceElevated, color: colors.text, borderColor: colors.borderMuted }]}
+                    placeholder={fieldLabels[field]}
+                    placeholderTextColor={colors.muted}
+                    value={vehicle[field as keyof Vehicle]?.toString() ?? ''}
+                    onChangeText={(value) => setVehicle((prev) => ({ ...prev, [field]: field === 'year' ? Number(value) : value }))}
+                    keyboardType={field === 'year' ? 'numeric' : 'default'}
+                  />
+                </View>
+              ))}
+            </MercedesCard>
 
-            <Text style={[styles.sectionLabel, { color: colors.muted, marginTop: 20 }]}>Optional details</Text>
-            {optionalFields.map((field) => (
-              <TextInput
-                key={field}
-                style={[styles.input, { backgroundColor: colors.surface, color: colors.text }]}
-                placeholder={fieldLabels[field]}
-                placeholderTextColor={colors.muted}
-                value={vehicle[field as keyof Vehicle]?.toString() ?? ''}
-                onChangeText={(value) => setVehicle((prev) => ({ ...prev, [field]: field === 'mileage' ? Number(value) : value }))}
-                keyboardType={field === 'mileage' ? 'numeric' : 'default'}
-              />
-            ))}
+            <MercedesCard colors={colors} style={styles.sectionCard}>
+              <Text style={[styles.sectionHeading, { color: colors.secondary }]}>ENGINE & CHASSIS TELEMETRY</Text>
+              {optionalFields.map((field) => (
+                <View key={field} style={styles.inputWrap}>
+                  <Text style={[styles.inputLabel, { color: colors.muted }]}>{fieldLabels[field]}</Text>
+                  <TextInput
+                    style={[styles.input, { backgroundColor: colors.surfaceElevated, color: colors.text, borderColor: colors.borderMuted }]}
+                    placeholder={fieldLabels[field]}
+                    placeholderTextColor={colors.muted}
+                    value={vehicle[field as keyof Vehicle]?.toString() ?? ''}
+                    onChangeText={(value) => setVehicle((prev) => ({ ...prev, [field]: field === 'mileage' ? Number(value) : value }))}
+                    keyboardType={field === 'mileage' ? 'numeric' : 'default'}
+                  />
+                </View>
+              ))}
+            </MercedesCard>
 
-            <Pressable style={[styles.button, { backgroundColor: colors.primary }]} onPress={handleSave} disabled={loading}>
-              {loading ? <ActivityIndicator color='#fff' /> : <Text style={styles.buttonText}>Save vehicle</Text>}
+            <Pressable
+              style={[styles.saveButton, { backgroundColor: colors.primary, shadowColor: colors.primary }]}
+              onPress={handleSave}
+              disabled={loading}
+            >
+              {loading ? (
+                <ActivityIndicator color='#000' />
+              ) : (
+                <Text style={styles.saveButtonText}>CONFIRM & SAVE TO GARAGE</Text>
+              )}
             </Pressable>
 
             {isEditing && (
-              <Pressable style={[styles.deleteButton, { borderColor: '#EF4444' }]} onPress={handleDelete} disabled={loading}>
-                <Text style={styles.deleteText}>Delete vehicle</Text>
+              <Pressable
+                style={[styles.deleteButton, { borderColor: colors.danger, backgroundColor: 'rgba(255, 56, 92, 0.1)' }]}
+                onPress={handleDelete}
+                disabled={loading}
+              >
+                <Text style={[styles.deleteButtonText, { color: colors.danger }]}>DE-REGISTER VEHICLE</Text>
               </Pressable>
             )}
           </>
@@ -141,12 +171,76 @@ export default function VehicleEditorScreen({ navigation, route }: Props) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20 },
-  title: { fontSize: 28, fontWeight: '700', marginBottom: 18 },
-  sectionLabel: { fontSize: 13, fontWeight: '700', marginBottom: 12, textTransform: 'uppercase', letterSpacing: 0.5 },
-  input: { borderRadius: 14, padding: 16, fontSize: 16, marginBottom: 12 },
-  button: { borderRadius: 14, padding: 16, alignItems: 'center', marginTop: 20 },
-  buttonText: { color: '#fff', fontWeight: '700' },
-  deleteButton: { borderRadius: 14, padding: 16, alignItems: 'center', marginTop: 12, borderWidth: 1 },
-  deleteText: { color: '#EF4444', fontWeight: '700' }
+  container: {
+    flex: 1,
+  },
+  content: {
+    padding: 16,
+    paddingBottom: 40,
+  },
+  header: {
+    marginBottom: 16,
+  },
+  hudLabel: {
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 1.2,
+    marginBottom: 4,
+  },
+  title: {
+    fontSize: 26,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+  sectionCard: {
+    marginBottom: 16,
+    padding: 16,
+  },
+  sectionHeading: {
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 1,
+    marginBottom: 12,
+  },
+  inputWrap: {
+    marginBottom: 12,
+  },
+  inputLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  input: {
+    borderRadius: 14,
+    borderWidth: 1,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 15,
+  },
+  saveButton: {
+    borderRadius: 16,
+    paddingVertical: 16,
+    alignItems: 'center',
+    marginTop: 8,
+    shadowOpacity: 0.8,
+    shadowRadius: 10,
+  },
+  saveButtonText: {
+    color: '#040711',
+    fontWeight: '900',
+    fontSize: 14,
+    letterSpacing: 1,
+  },
+  deleteButton: {
+    borderRadius: 16,
+    paddingVertical: 14,
+    alignItems: 'center',
+    marginTop: 12,
+    borderWidth: 1,
+  },
+  deleteButtonText: {
+    fontWeight: '800',
+    fontSize: 13,
+    letterSpacing: 0.8,
+  },
 });

@@ -3,6 +3,8 @@ import { View, Text, TextInput, Pressable, StyleSheet, useColorScheme, ActivityI
 import * as ImagePicker from 'expo-image-picker';
 import { palette } from '../theme';
 import { translateMechanicText, analyzeWarningLightImage } from '../api/api';
+import MercedesAmbientLight from '../components/MercedesAmbientLight';
+import MercedesCard from '../components/MercedesCard';
 
 export default function MechanicTranslatorScreen() {
   const scheme = useColorScheme();
@@ -22,7 +24,7 @@ export default function MechanicTranslatorScreen() {
       setResult(response);
       setWarningLightResult(null);
     } catch (error: any) {
-      Alert.alert('Translation failed', error.response?.data?.message || 'Please try again.');
+      Alert.alert('Translation Failure', error.response?.data?.message || 'Unable to decode mechanic notes.');
     } finally {
       setLoading(false);
     }
@@ -30,18 +32,18 @@ export default function MechanicTranslatorScreen() {
 
   const pickImage = async () => {
     try {
-      const result = await ImagePicker.launchImageLibraryAsync({
+      const res = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
         aspect: [1, 1],
-        quality: 0.8
+        quality: 0.8,
       });
 
-      if (!result.canceled) {
-        setSelectedImage(result.assets[0].uri);
+      if (!res.canceled) {
+        setSelectedImage(res.assets[0].uri);
       }
-    } catch (error) {
-      Alert.alert('Image picker failed', 'Could not open image library');
+    } catch {
+      Alert.alert('Optical Sensor Error', 'Could not open image library');
     }
   };
 
@@ -49,21 +51,21 @@ export default function MechanicTranslatorScreen() {
     try {
       const permission = await ImagePicker.requestCameraPermissionsAsync();
       if (!permission.granted) {
-        Alert.alert('Permission needed', 'Camera access is required to take photos');
+        Alert.alert('Camera Access', 'Optical permissions needed to scan cluster warning lights.');
         return;
       }
 
-      const result = await ImagePicker.launchCameraAsync({
+      const res = await ImagePicker.launchCameraAsync({
         allowsEditing: true,
         aspect: [1, 1],
-        quality: 0.8
+        quality: 0.8,
       });
 
-      if (!result.canceled) {
-        setSelectedImage(result.assets[0].uri);
+      if (!res.canceled) {
+        setSelectedImage(res.assets[0].uri);
       }
-    } catch (error) {
-      Alert.alert('Camera failed', 'Could not open camera');
+    } catch {
+      Alert.alert('Camera Error', 'Could not activate optical camera.');
     }
   };
 
@@ -72,11 +74,10 @@ export default function MechanicTranslatorScreen() {
 
     setLoading(true);
     try {
-      // Convert image to base64
       const response = await fetch(selectedImage);
       const blob = await response.blob();
       const reader = new FileReader();
-      
+
       reader.onloadend = async () => {
         const base64 = (reader.result as string).split(',')[1];
         const mimeType = blob.type || 'image/jpeg';
@@ -87,145 +88,378 @@ export default function MechanicTranslatorScreen() {
           setResult(null);
           setLoading(false);
         } catch (error: any) {
-          Alert.alert('Analysis failed', error.response?.data?.message || 'Please try again.');
+          Alert.alert('Optical Analysis Failed', error.response?.data?.message || 'Failed to detect cluster lights.');
           setLoading(false);
         }
       };
 
       reader.readAsDataURL(blob);
-    } catch (error: any) {
-      Alert.alert('Error', 'Could not process image');
+    } catch {
+      Alert.alert('Processing Error', 'Could not parse sensor image');
       setLoading(false);
     }
   };
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: colors.background }]} contentContainerStyle={styles.content}>
-      <Text style={[styles.title, { color: colors.text }]}>Mechanic Translator</Text>
-      <Text style={[styles.subtitle, { color: colors.muted }]}>Get plain-language explanations for mechanic notes or identify dashboard warning lights.</Text>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <MercedesAmbientLight color={colors.primary} height={2} />
 
-      <View style={[styles.modeSelector, { backgroundColor: colors.surface }]}>
-        <Pressable
-          style={[styles.modeButton, { backgroundColor: mode === 'text' ? colors.primary : 'transparent' }]}
-          onPress={() => { setMode('text'); setSelectedImage(null); }}
-        >
-          <Text style={[styles.modeButtonText, { color: mode === 'text' ? '#fff' : colors.text }]}>📝 Text note</Text>
-        </Pressable>
-        <Pressable
-          style={[styles.modeButton, { backgroundColor: mode === 'image' ? colors.primary : 'transparent' }]}
-          onPress={() => { setMode('image'); setInput(''); }}
-        >
-          <Text style={[styles.modeButtonText, { color: mode === 'image' ? '#fff' : colors.text }]}>📷 Photo</Text>
-        </Pressable>
-      </View>
+      <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
+        <View style={styles.header}>
+          <Text style={[styles.hudLabel, { color: colors.primary }]}>MBUX OPTICAL & LINGUISTIC DECODER</Text>
+          <Text style={[styles.title, { color: colors.text }]}>Mechanic & Light Translator</Text>
+          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
+            Demystify dealer estimates and decode illuminated dashboard instrument warning symbols.
+          </Text>
+        </View>
 
-      {mode === 'text' ? (
-        <>
-          <TextInput
-            style={[styles.input, { backgroundColor: colors.surface, color: colors.text }]}
-            placeholder='Paste mechanic note or describe the issue'
-            placeholderTextColor={colors.muted}
-            value={input}
-            onChangeText={setInput}
-            multiline
-          />
-          <Pressable style={[styles.button, { backgroundColor: colors.primary }]} onPress={handleTranslate} disabled={loading || !input.trim()}>
-            {loading ? <ActivityIndicator color='#fff' /> : <Text style={styles.buttonText}>Translate note</Text>}
+        {/* Mode Selector HUD Pill */}
+        <View style={[styles.modeSelector, { backgroundColor: colors.surfaceElevated, borderColor: colors.borderMuted }]}>
+          <Pressable
+            style={[
+              styles.modeButton,
+              mode === 'text' && { backgroundColor: colors.primary, shadowColor: colors.primary, shadowOpacity: 0.8 },
+            ]}
+            onPress={() => { setMode('text'); setSelectedImage(null); }}
+          >
+            <Text style={[styles.modeButtonText, { color: mode === 'text' ? '#040711' : colors.textSecondary }]}>
+              📝 MECHANIC NOTE
+            </Text>
           </Pressable>
-          {result ? (
-            <View style={[styles.resultBox, { backgroundColor: colors.surface }]}>
-              <Text style={[styles.resultHeading, { color: colors.primary }]}>Explanation</Text>
-              <Text style={[styles.resultText, { color: colors.text }]}>{result.explanation}</Text>
-              <Text style={[styles.resultHeading, { color: colors.primary, marginTop: 16 }]}>Urgency</Text>
-              <Text style={[styles.resultText, { color: colors.text }]}>{result.urgency}</Text>
-              <Text style={[styles.resultHeading, { color: colors.primary, marginTop: 16 }]}>Questions to ask</Text>
-              {result.questions.map((question, index) => (
-                <Text key={index} style={[styles.resultText, { color: colors.text }]}>• {question}</Text>
-              ))}
-            </View>
-          ) : null}
-        </>
-      ) : (
-        <>
-          <View style={[styles.imageSection, { backgroundColor: colors.surface }]}>
-            {selectedImage ? (
-              <Image source={{ uri: selectedImage }} style={styles.selectedImage} />
-            ) : (
-              <View style={styles.imagePlaceholder}>
-                <Text style={[styles.imagePlaceholderText, { color: colors.muted }]}>No photo selected</Text>
-              </View>
-            )}
-          </View>
 
-          <View style={styles.buttonGroup}>
-            <Pressable style={[styles.button, { backgroundColor: colors.primary, flex: 1 }]} onPress={takePhoto}>
-              <Text style={styles.buttonText}>📷 Take photo</Text>
-            </Pressable>
-            <Pressable style={[styles.button, { backgroundColor: colors.primary, flex: 1, marginLeft: 10 }]} onPress={pickImage}>
-              <Text style={styles.buttonText}>🖼️ Pick from library</Text>
-            </Pressable>
-          </View>
+          <Pressable
+            style={[
+              styles.modeButton,
+              mode === 'image' && { backgroundColor: colors.primary, shadowColor: colors.primary, shadowOpacity: 0.8 },
+            ]}
+            onPress={() => { setMode('image'); setInput(''); }}
+          >
+            <Text style={[styles.modeButtonText, { color: mode === 'image' ? '#040711' : colors.textSecondary }]}>
+              📷 CLUSTER OPTICAL SCAN
+            </Text>
+          </Pressable>
+        </View>
 
-          {selectedImage && (
-            <Pressable style={[styles.button, { backgroundColor: '#22C55E' }]} onPress={handleAnalyzeImage} disabled={loading}>
-              {loading ? <ActivityIndicator color='#fff' /> : <Text style={styles.buttonText}>Analyze warning lights</Text>}
-            </Pressable>
-          )}
+        {mode === 'text' ? (
+          <>
+            <MercedesCard colors={colors} highlightColor={colors.primary} style={styles.card}>
+              <Text style={[styles.sectionHeading, { color: colors.primary }]}>PASTE ESTIMATE OR MECHANIC NOTE</Text>
+              <TextInput
+                style={[styles.textArea, { backgroundColor: colors.surfaceElevated, color: colors.text, borderColor: colors.borderMuted }]}
+                placeholder='e.g., "Found lower control arm bushings torn, play in outer tie rod end, recommend alignment..."'
+                placeholderTextColor={colors.muted}
+                value={input}
+                onChangeText={setInput}
+                multiline
+              />
+            </MercedesCard>
 
-          {warningLightResult ? (
-            <View style={[styles.resultBox, { backgroundColor: colors.surface }]}>
-              <Text style={[styles.resultHeading, { color: colors.primary }]}>Identified lights</Text>
-              {warningLightResult.identified.length > 0 ? (
-                warningLightResult.identified.map((light: string, index: number) => (
-                  <Text key={index} style={[styles.resultText, { color: colors.text }]}>• {light}</Text>
-                ))
+            <Pressable
+              style={[styles.actionButton, { backgroundColor: colors.primary, shadowColor: colors.primary }]}
+              onPress={handleTranslate}
+              disabled={loading || !input.trim()}
+            >
+              {loading ? (
+                <ActivityIndicator color='#040711' />
               ) : (
-                <Text style={[styles.resultText, { color: colors.text }]}>No clear warning lights detected</Text>
+                <Text style={styles.actionButtonText}>TRANSLATE INTO PLAIN ENGLISH</Text>
               )}
+            </Pressable>
 
-              <Text style={[styles.resultHeading, { color: colors.primary, marginTop: 16 }]}>What it means</Text>
-              <Text style={[styles.resultText, { color: colors.text }]}>{warningLightResult.meaning}</Text>
+            {result && (
+              <MercedesCard colors={colors} highlightColor={colors.success} glow={true} style={styles.resultCard}>
+                <View style={styles.resultHeader}>
+                  <Text style={[styles.resultTag, { color: colors.success }]}>✓ DECODED ANALYSIS</Text>
+                  <View style={[styles.urgencyTag, { borderColor: colors.warning }]}>
+                    <Text style={[styles.urgencyText, { color: colors.warning }]}>PRIORITY: {result.urgency.toUpperCase()}</Text>
+                  </View>
+                </View>
 
-              <Text style={[styles.resultHeading, { color: colors.primary, marginTop: 16 }]}>Urgency</Text>
-              <Text style={[styles.resultText, { color: colors.text }]}>{warningLightResult.urgency}</Text>
+                <Text style={[styles.resultSubhead, { color: colors.muted }]}>WHAT IT ACTUALLY MEANS</Text>
+                <Text style={[styles.resultBody, { color: colors.text }]}>{result.explanation}</Text>
 
-              <Text style={[styles.resultHeading, { color: colors.primary, marginTop: 16 }]}>What to do</Text>
-              <Text style={[styles.resultText, { color: colors.text }]}>{warningLightResult.recommendation}</Text>
+                <Text style={[styles.resultSubhead, { color: colors.muted, marginTop: 14 }]}>QUESTIONS TO ASK YOUR MECHANIC</Text>
+                {result.questions.map((q, idx) => (
+                  <View key={idx} style={styles.questionItem}>
+                    <Text style={[styles.bullet, { color: colors.primary }]}>▸</Text>
+                    <Text style={[styles.questionText, { color: colors.textSecondary }]}>{q}</Text>
+                  </View>
+                ))}
+              </MercedesCard>
+            )}
+          </>
+        ) : (
+          <>
+            {/* Camera Viewfinder with HUD Reticle */}
+            <View style={[styles.viewfinderContainer, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}>
+              {selectedImage ? (
+                <Image source={{ uri: selectedImage }} style={styles.viewfinderImage} />
+              ) : (
+                <View style={styles.viewfinderPlaceholder}>
+                  {/* Futuristic HUD corner reticles */}
+                  <View style={[styles.cornerReticle, styles.cornerTL, { borderColor: colors.primary }]} />
+                  <View style={[styles.cornerReticle, styles.cornerTR, { borderColor: colors.primary }]} />
+                  <View style={[styles.cornerReticle, styles.cornerBL, { borderColor: colors.primary }]} />
+                  <View style={[styles.cornerReticle, styles.cornerBR, { borderColor: colors.primary }]} />
 
-              {warningLightResult.uncertainty && (
-                <>
-                  <Text style={[styles.resultHeading, { color: '#F59E0B', marginTop: 16 }]}>Note</Text>
-                  <Text style={[styles.resultText, { color: colors.text }]}>{warningLightResult.uncertainty}</Text>
-                </>
+                  <Text style={styles.viewfinderIcon}>🎯</Text>
+                  <Text style={[styles.viewfinderTitle, { color: colors.text }]}>ALIGN WARNING LIGHT IN RETICLE</Text>
+                  <Text style={[styles.viewfinderSub, { color: colors.muted }]}>
+                    Take a clear snapshot of your instrument cluster lights
+                  </Text>
+                </View>
               )}
-
-              <Text style={[styles.confidenceText, { color: colors.muted, marginTop: 12 }]}>Confidence: {warningLightResult.confidence}</Text>
             </View>
-          ) : null}
-        </>
-      )}
-    </ScrollView>
+
+            <View style={styles.photoActions}>
+              <Pressable
+                style={[styles.photoButton, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}
+                onPress={takePhoto}
+              >
+                <Text style={styles.photoButtonText}>📸 SNAP CLUSTER</Text>
+              </Pressable>
+              <Pressable
+                style={[styles.photoButton, { backgroundColor: colors.surfaceElevated, borderColor: colors.border }]}
+                onPress={pickImage}
+              >
+                <Text style={styles.photoButtonText}>🖼️ ALBUM PHOTO</Text>
+              </Pressable>
+            </View>
+
+            {selectedImage && (
+              <Pressable
+                style={[styles.actionButton, { backgroundColor: colors.success, shadowColor: colors.success }]}
+                onPress={handleAnalyzeImage}
+                disabled={loading}
+              >
+                {loading ? (
+                  <ActivityIndicator color='#040711' />
+                ) : (
+                  <Text style={styles.actionButtonText}>RUN MBUX OPTICAL RECOGNITION</Text>
+                )}
+              </Pressable>
+            )}
+
+            {warningLightResult && (
+              <MercedesCard colors={colors} highlightColor={colors.warning} glow={true} style={styles.resultCard}>
+                <View style={styles.resultHeader}>
+                  <Text style={[styles.resultTag, { color: colors.warning }]}>IDENTIFIED CLUSTER SYMBOLS</Text>
+                  <Text style={[styles.urgencyText, { color: colors.primary }]}>{warningLightResult.confidence}</Text>
+                </View>
+
+                {warningLightResult.identified.map((light: string, idx: number) => (
+                  <Text key={idx} style={[styles.symbolPill, { color: colors.warning }]}>
+                    ⚠️ {light}
+                  </Text>
+                ))}
+
+                <Text style={[styles.resultSubhead, { color: colors.muted, marginTop: 12 }]}>SYSTEM IMPACT</Text>
+                <Text style={[styles.resultBody, { color: colors.text }]}>{warningLightResult.meaning}</Text>
+
+                <Text style={[styles.resultSubhead, { color: colors.muted, marginTop: 12 }]}>ACTION REQUIRED</Text>
+                <Text style={[styles.resultBody, { color: colors.text }]}>{warningLightResult.recommendation}</Text>
+              </MercedesCard>
+            )}
+          </>
+        )}
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  content: { padding: 20, paddingBottom: 40 },
-  title: { fontSize: 28, fontWeight: '700' },
-  subtitle: { marginTop: 6, marginBottom: 20, fontSize: 16, lineHeight: 22 },
-  modeSelector: { flexDirection: 'row', borderRadius: 14, padding: 4, marginBottom: 20 },
-  modeButton: { flex: 1, borderRadius: 12, paddingVertical: 12, alignItems: 'center' },
-  modeButtonText: { fontWeight: '700', fontSize: 14 },
-  input: { borderRadius: 18, padding: 16, fontSize: 16, minHeight: 140, marginBottom: 16 },
-  button: { borderRadius: 18, padding: 16, alignItems: 'center', marginBottom: 16 },
-  buttonText: { color: '#fff', fontWeight: '700' },
-  buttonGroup: { flexDirection: 'row', marginBottom: 16 },
-  imageSection: { borderRadius: 18, overflow: 'hidden', marginBottom: 16, height: 250 },
-  selectedImage: { width: '100%', height: '100%' },
-  imagePlaceholder: { width: '100%', height: '100%', justifyContent: 'center', alignItems: 'center' },
-  imagePlaceholderText: { fontSize: 14 },
-  resultBox: { borderRadius: 18, padding: 18, marginTop: 8 },
-  resultHeading: { fontSize: 16, fontWeight: '700', marginBottom: 8 },
-  resultText: { fontSize: 15, lineHeight: 22, marginBottom: 8 },
-  confidenceText: { fontSize: 13, fontStyle: 'italic' }
+  container: {
+    flex: 1,
+  },
+  scroll: {
+    flex: 1,
+  },
+  scrollContent: {
+    padding: 16,
+    paddingBottom: 40,
+  },
+  header: {
+    marginBottom: 16,
+  },
+  hudLabel: {
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 1.2,
+    marginBottom: 4,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: '800',
+    letterSpacing: 0.3,
+  },
+  subtitle: {
+    fontSize: 13,
+    lineHeight: 18,
+    marginTop: 4,
+  },
+  modeSelector: {
+    flexDirection: 'row',
+    borderRadius: 14,
+    borderWidth: 1,
+    padding: 4,
+    marginBottom: 16,
+  },
+  modeButton: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  modeButtonText: {
+    fontSize: 11,
+    fontWeight: '900',
+    letterSpacing: 0.8,
+  },
+  card: {
+    marginBottom: 14,
+    padding: 16,
+  },
+  sectionHeading: {
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 1,
+    marginBottom: 10,
+  },
+  textArea: {
+    borderRadius: 14,
+    borderWidth: 1,
+    padding: 14,
+    minHeight: 110,
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  actionButton: {
+    borderRadius: 16,
+    paddingVertical: 16,
+    alignItems: 'center',
+    marginBottom: 16,
+    shadowOpacity: 0.8,
+    shadowRadius: 10,
+  },
+  actionButtonText: {
+    color: '#040711',
+    fontWeight: '900',
+    fontSize: 13,
+    letterSpacing: 1,
+  },
+  resultCard: {
+    padding: 18,
+    marginTop: 4,
+  },
+  resultHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  resultTag: {
+    fontSize: 11,
+    fontWeight: '900',
+    letterSpacing: 1,
+  },
+  urgencyTag: {
+    borderWidth: 1,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+  },
+  urgencyText: {
+    fontSize: 10,
+    fontWeight: '800',
+  },
+  resultSubhead: {
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 0.8,
+    marginBottom: 4,
+  },
+  resultBody: {
+    fontSize: 14,
+    lineHeight: 21,
+  },
+  questionItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginTop: 6,
+    gap: 8,
+  },
+  bullet: {
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  questionText: {
+    flex: 1,
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  viewfinderContainer: {
+    height: 240,
+    borderRadius: 20,
+    borderWidth: 1,
+    overflow: 'hidden',
+    position: 'relative',
+    marginBottom: 14,
+  },
+  viewfinderImage: {
+    width: '100%',
+    height: '100%',
+  },
+  viewfinderPlaceholder: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+    position: 'relative',
+  },
+  cornerReticle: {
+    position: 'absolute',
+    width: 24,
+    height: 24,
+  },
+  cornerTL: { top: 16, left: 16, borderTopWidth: 2, borderLeftWidth: 2 },
+  cornerTR: { top: 16, right: 16, borderTopWidth: 2, borderRightWidth: 2 },
+  cornerBL: { bottom: 16, left: 16, borderBottomWidth: 2, borderLeftWidth: 2 },
+  cornerBR: { bottom: 16, right: 16, borderBottomWidth: 2, borderRightWidth: 2 },
+  viewfinderIcon: {
+    fontSize: 32,
+    marginBottom: 8,
+  },
+  viewfinderTitle: {
+    fontSize: 12,
+    fontWeight: '900',
+    letterSpacing: 1,
+  },
+  viewfinderSub: {
+    fontSize: 11,
+    marginTop: 4,
+    textAlign: 'center',
+  },
+  photoActions: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 14,
+  },
+  photoButton: {
+    flex: 1,
+    borderRadius: 14,
+    borderWidth: 1,
+    paddingVertical: 14,
+    alignItems: 'center',
+  },
+  photoButtonText: {
+    color: '#fff',
+    fontWeight: '800',
+    fontSize: 12,
+    letterSpacing: 0.8,
+  },
+  symbolPill: {
+    fontSize: 15,
+    fontWeight: '800',
+    marginBottom: 4,
+  },
 });

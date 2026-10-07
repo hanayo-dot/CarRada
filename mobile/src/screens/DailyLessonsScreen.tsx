@@ -4,6 +4,8 @@ import { palette } from '../theme';
 import { fetchLessons } from '../api/api';
 import { Lesson, RootStackParamList } from '../types';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import MercedesAmbientLight from '../components/MercedesAmbientLight';
+import MercedesCard from '../components/MercedesCard';
 
 type Props = {
   navigation: NativeStackNavigationProp<RootStackParamList, 'Lessons'>;
@@ -23,7 +25,7 @@ export default function DailyLessonsScreen({ navigation }: Props) {
         setDailyLesson(data.dailyLesson);
         setLessons(data.lessons || []);
       } catch (error: any) {
-        Alert.alert('Load failed', error.response?.data?.message || 'Unable to load lessons.');
+        Alert.alert('Load Failure', error.response?.data?.message || 'Unable to download driver masterclass.');
       } finally {
         setLoading(false);
       }
@@ -32,72 +34,92 @@ export default function DailyLessonsScreen({ navigation }: Props) {
   }, []);
 
   const renderLesson = ({ item }: { item: Lesson }) => (
-    <View style={[styles.lessonCard, { backgroundColor: colors.surface }]}> 
+    <MercedesCard colors={colors} style={styles.lessonCard}>
       <Text style={[styles.lessonTitle, { color: colors.text }]}>{item.title}</Text>
-      <Text style={[styles.lessonDescription, { color: colors.muted }]}>{item.description}</Text>
+      <Text style={[styles.lessonDescription, { color: colors.primary }]}>{item.description}</Text>
       {item.content.map((paragraph, index) => (
-        <Text key={index} style={[styles.lessonText, { color: colors.text }]}>{paragraph}</Text>
+        <Text key={index} style={[styles.lessonText, { color: colors.textSecondary }]}>{paragraph}</Text>
       ))}
-    </View>
+    </MercedesCard>
   );
 
   const renderHeader = () => (
     <>
-      <Text style={[styles.title, { color: colors.text }]}>Daily car lessons</Text>
-      <Text style={[styles.subtitle, { color: colors.muted }]}>Learn one practical car owner skill every day.</Text>
+      <View style={styles.header}>
+        <Text style={[styles.hudLabel, { color: colors.primary }]}>MBUX DRIVER ACADEMY</Text>
+        <Text style={[styles.title, { color: colors.text }]}>Driver Masterclass</Text>
+        <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
+          Daily professional driving, mechanical preservation, and emergency handling skills.
+        </Text>
+      </View>
 
       {dailyLesson && (
-        <View style={[styles.highlightCard, { backgroundColor: colors.surface, borderColor: colors.primary, borderWidth: 1 }]}> 
+        <MercedesCard colors={colors} highlightColor={colors.primary} glow={true} style={styles.highlightCard}>
           <View style={[styles.badge, { backgroundColor: colors.primary }]}>
-            <Text style={styles.badgeText}>TODAY'S SKILL</Text>
+            <Text style={styles.badgeText}>TODAY'S FEATURED TECHNIQUE</Text>
           </View>
           <Text style={[styles.highlightTitle, { color: colors.text }]}>{dailyLesson.title}</Text>
-          <Text style={[styles.lessonDescription, { color: colors.muted }]}>{dailyLesson.description}</Text>
+          <Text style={[styles.highlightDescription, { color: colors.primary }]}>{dailyLesson.description}</Text>
           {dailyLesson.content.map((paragraph, index) => (
-            <Text key={index} style={[styles.lessonText, { color: colors.text }]}>{paragraph}</Text>
+            <Text key={index} style={[styles.lessonText, { color: colors.textSecondary }]}>{paragraph}</Text>
           ))}
-        </View>
+        </MercedesCard>
       )}
 
-      <Text style={[styles.sectionTitle, { color: colors.text }]}>All lessons & guides</Text>
+      <Text style={[styles.sectionTitle, { color: colors.text }]}>COMPLETE ARCHIVE</Text>
     </>
   );
 
   if (loading) {
     return (
       <View style={[styles.container, styles.center, { backgroundColor: colors.background }]}>
+        <MercedesAmbientLight color={colors.primary} height={2} />
         <ActivityIndicator size='large' color={colors.primary} />
       </View>
     );
   }
 
   return (
-    <FlatList
-      style={[styles.container, { backgroundColor: colors.background }]}
-      contentContainerStyle={styles.content}
-      data={lessons}
-      keyExtractor={(item) => item.id.toString()}
-      renderItem={renderLesson}
-      ListHeaderComponent={renderHeader}
-      ListEmptyComponent={<Text style={[styles.emptyText, { color: colors.muted }]}>No lessons available.</Text>}
-    />
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <MercedesAmbientLight color={colors.primary} height={2} />
+
+      <FlatList
+        contentContainerStyle={styles.content}
+        data={lessons}
+        keyExtractor={(item) => item.id.toString()}
+        renderItem={renderLesson}
+        ListHeaderComponent={renderHeader}
+        ListEmptyComponent={
+          <Text style={[styles.emptyText, { color: colors.muted }]}>No lessons available in telemetry database.</Text>
+        }
+      />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
   center: { justifyContent: 'center', alignItems: 'center' },
-  content: { padding: 20, paddingBottom: 40 },
-  title: { fontSize: 28, fontWeight: '700', marginBottom: 8 },
-  subtitle: { fontSize: 16, marginBottom: 20, lineHeight: 22 },
-  badge: { alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8, marginBottom: 10 },
-  badgeText: { color: '#fff', fontSize: 11, fontWeight: '800', letterSpacing: 0.8 },
-  highlightCard: { borderRadius: 20, padding: 20, marginBottom: 24 },
-  highlightTitle: { fontSize: 20, fontWeight: '800', marginBottom: 8 },
-  lessonCard: { borderRadius: 18, padding: 18, marginBottom: 18 },
-  lessonTitle: { fontSize: 18, fontWeight: '700', marginBottom: 8 },
-  lessonDescription: { fontSize: 14, marginBottom: 12, lineHeight: 20 },
-  lessonText: { fontSize: 15, lineHeight: 22, marginBottom: 10 },
-  sectionTitle: { fontSize: 20, fontWeight: '700', marginBottom: 14 },
-  emptyText: { textAlign: 'center', marginTop: 20 }
+  content: { padding: 16, paddingBottom: 40 },
+  header: { marginBottom: 16 },
+  hudLabel: { fontSize: 10, fontWeight: '800', letterSpacing: 1.2, marginBottom: 4 },
+  title: { fontSize: 24, fontWeight: '800', letterSpacing: 0.3 },
+  subtitle: { fontSize: 13, lineHeight: 18, marginTop: 4 },
+  badge: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+    marginBottom: 8,
+  },
+  badgeText: { color: '#040711', fontSize: 10, fontWeight: '900', letterSpacing: 1 },
+  highlightCard: { padding: 18, marginBottom: 20 },
+  highlightTitle: { fontSize: 18, fontWeight: '800', marginBottom: 6 },
+  highlightDescription: { fontSize: 13, fontWeight: '700', marginBottom: 12 },
+  lessonCard: { padding: 16, marginBottom: 12 },
+  lessonTitle: { fontSize: 16, fontWeight: '800', marginBottom: 6 },
+  lessonDescription: { fontSize: 12, fontWeight: '700', marginBottom: 10 },
+  lessonText: { fontSize: 13, lineHeight: 20, marginBottom: 8 },
+  sectionTitle: { fontSize: 11, fontWeight: '800', letterSpacing: 1.2, marginBottom: 12, paddingHorizontal: 4 },
+  emptyText: { textAlign: 'center', marginTop: 20, fontSize: 14 }
 });

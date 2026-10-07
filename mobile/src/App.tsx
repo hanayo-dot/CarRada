@@ -35,46 +35,70 @@ function NavigationRoot() {
   }
 
   return (
-    <Stack.Navigator screenOptions={{ headerShown: true }}>
+    <Stack.Navigator
+      screenOptions={{
+        headerShown: true,
+        headerStyle: { backgroundColor: '#050A16' },
+        headerTintColor: '#00F2FE',
+        headerTitleStyle: {
+          fontWeight: '800',
+          fontSize: 18,
+          color: '#FFFFFF',
+        },
+        headerShadowVisible: false,
+      }}
+    >
       {token ? (
         <>
           <Stack.Screen
             name="Home"
             component={HomeScreen}
             options={{
-              title: 'CarRada',
+              title: 'MBUX COCKPIT',
               headerRight: () => (
-                <Pressable onPress={signOut} style={{ padding: 8 }}>
-                  <Text style={{ color: '#EF4444', fontWeight: '600', fontSize: 14 }}>Sign Out</Text>
+                <Pressable
+                  onPress={signOut}
+                  style={{
+                    paddingHorizontal: 12,
+                    paddingVertical: 6,
+                    borderRadius: 10,
+                    backgroundColor: 'rgba(239, 68, 68, 0.15)',
+                    borderColor: 'rgba(239, 68, 68, 0.4)',
+                    borderWidth: 1,
+                  }}
+                >
+                  <Text style={{ color: '#FF4D4D', fontWeight: '800', fontSize: 12, letterSpacing: 0.5 }}>
+                    SIGN OUT
+                  </Text>
                 </Pressable>
               ),
             }}
           />
-          <Stack.Screen name="Vehicles" component={VehiclesScreen} options={{ title: 'Vehicles' }} />
-          <Stack.Screen name="VehicleEditor" component={VehicleEditorScreen} options={{ title: 'Vehicle' }} />
-          <Stack.Screen name="Chat" component={ChatScreen} options={{ title: 'AI Car Assistant' }} />
-          <Stack.Screen name="MechanicTranslator" component={MechanicTranslatorScreen} options={{ title: 'Mechanic Translator' }} />
-          <Stack.Screen name="Diagnostics" component={DiagnosticSessionsScreen} options={{ title: 'Diagnostics' }} />
+          <Stack.Screen name="Vehicles" component={VehiclesScreen} options={{ title: 'VIRTUAL GARAGE' }} />
+          <Stack.Screen name="VehicleEditor" component={VehicleEditorScreen} options={{ title: 'VEHICLE TELEMETRY' }} />
+          <Stack.Screen name="Chat" component={ChatScreen} options={{ title: 'MBUX AI ASSISTANT' }} />
+          <Stack.Screen name="MechanicTranslator" component={MechanicTranslatorScreen} options={{ title: 'HUD TRANSLATOR' }} />
+          <Stack.Screen name="Diagnostics" component={DiagnosticSessionsScreen} options={{ title: 'DIAGNOSTIC RADAR' }} />
           <Stack.Screen
             name="DiagnosticSession"
             component={DiagnosticSessionDetailScreen}
-            options={({ route }) => ({ title: route.params.sessionName })}
+            options={({ route }) => ({ title: route.params.sessionName.toUpperCase() })}
           />
-          <Stack.Screen name="Emergencies" component={EmergenciesScreen} options={{ title: 'Emergency Assistant' }} />
+          <Stack.Screen name="Emergencies" component={EmergenciesScreen} options={{ title: 'MERCEDES SOS COCKPIT' }} />
           <Stack.Screen
             name="EmergencyFlow"
             component={EmergencyFlowScreen}
-            options={({ route }) => ({ title: route.params.title })}
+            options={({ route }) => ({ title: route.params.title.toUpperCase() })}
           />
-          <Stack.Screen name="Reminders" component={MaintenanceRemindersScreen} options={{ title: 'Reminders' }} />
-          <Stack.Screen name="SymptomDiagnostics" component={SymptomDiagnosticsScreen} options={{ title: 'Symptom Diagnostics' }} />
-          <Stack.Screen name="Lessons" component={DailyLessonsScreen} options={{ title: 'Daily Lessons' }} />
-          <Stack.Screen name="RepairCostEstimator" component={RepairCostEstimatorScreen} options={{ title: 'Repair Cost Estimator' }} />
+          <Stack.Screen name="Reminders" component={MaintenanceRemindersScreen} options={{ title: 'SERVICE SCHEDULE' }} />
+          <Stack.Screen name="SymptomDiagnostics" component={SymptomDiagnosticsScreen} options={{ title: 'SYMPTOM SCANNER' }} />
+          <Stack.Screen name="Lessons" component={DailyLessonsScreen} options={{ title: 'DRIVER MASTERCLASS' }} />
+          <Stack.Screen name="RepairCostEstimator" component={RepairCostEstimatorScreen} options={{ title: 'SERVICE ESTIMATOR' }} />
         </>
       ) : (
         <>
-          <Stack.Screen name="Login" component={LoginScreen} options={{ title: 'Sign In', headerShown: false }} />
-          <Stack.Screen name="Signup" component={SignupScreen} options={{ title: 'Sign Up', headerShown: false }} />
+          <Stack.Screen name="Login" component={LoginScreen} options={{ title: 'SIGN IN', headerShown: false }} />
+          <Stack.Screen name="Signup" component={SignupScreen} options={{ title: 'SIGN UP', headerShown: false }} />
         </>
       )}
     </Stack.Navigator>
